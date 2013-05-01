@@ -5,7 +5,11 @@
 #include <tag.h>
 #include <node.h>
 #include <uv.h>
+#ifdef _WINDOWS
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 
 #include <node_version.h>
 
@@ -34,7 +38,11 @@ struct AsyncBaton {
     Nan::Persistent<v8::Function> callback;
     int error;
 
-    TagLib::FileName path; /* only used by read/tag, not save */
+#if _WINDOWS
+	char *path; /* only used by read/tag, not save */
+#else
+	TagLib::FileName path; /* only used by read/tag, not save */
+#endif
     // OR
     TagLib::String format;
     BufferStream *stream; // File takes over ownership of the stream
@@ -52,14 +60,22 @@ class CallbackResolver;
 struct AsyncResolverBaton {
     uv_async_t request;
     const CallbackResolver *resolver;
-    TagLib::FileName fileName;
+#if _WINDOWS
+	TagLib::String fileName;
+#else
+	TagLib::FileName fileName;
+#endif
     TagLib::String type;
     uv_async_t idler;
 };
 
 class CallbackResolver : public TagLib::FileRef::FileTypeResolver {
     Nan::Persistent<v8::Function> resolverFunc;
+#if _WINDOWS
+	DWORD created_in;
+#else
     const uv_thread_t created_in;
+#endif
 
 public:
     CallbackResolver(v8::Local<v8::Function> func);

@@ -30,6 +30,11 @@
 #include <itfile.h>
 #include <xmfile.h>
 
+#if _WINDOWS
+#include <Processthreadsapi.h> // Windows 8 and Windows Server 2012
+// TODO: Or #include <Windows.h> on others
+#endif
+
 #include "audioproperties.h"
 #include "tag.h"
 #include "bufferstream.h"
@@ -184,7 +189,7 @@ void AsyncReadFile(const Nan::FunctionCallbackInfo< v8::Value >& args) {
         return;
     }
 
-    AsyncBaton *baton = new AsyncBaton;
+    AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
     baton->path = 0;
     baton->format = TagLib::String::null;
@@ -214,7 +219,11 @@ void AsyncReadFileDo(uv_work_t *req) {
     TagLib::FileRef *f;
 
     if (baton->path) {
+#if _WINDOWS
+		baton->error = node_taglib::CreateFileRefPath(TagLib::FileName(baton->path), &f);
+#else
         baton->error = node_taglib::CreateFileRefPath(baton->path, &f);
+#endif
     }
     else {
         assert(baton->stream);
@@ -264,6 +273,7 @@ void AsyncReadFileAfter(uv_work_t *req) {
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 3, argv);
 
         delete baton->fileRef;
+		baton->fileRef = NULL;
         delete baton;
         baton = NULL;
     }
@@ -333,7 +343,7 @@ void CallbackResolver::stopIdling(uv_async_t *handle)
 void CallbackResolver::invokeResolver(AsyncResolverBaton *baton)
 {
     Nan::HandleScope scope;
-    Handle<Value> argv[] = { TagLibStringToString(baton->fileName) };
+	Handle<Value> argv[] = { TagLibStringToString(baton->fileName) };
     Local<Value> ret = Nan::Call(Nan::New(baton->resolver->resolverFunc), Nan::GetCurrentContext()->Global(), 1, argv).ToLocalChecked();
     if (!ret->IsString()) {
         baton->type = TagLib::String::null;
@@ -345,10 +355,14 @@ void CallbackResolver::invokeResolver(AsyncResolverBaton *baton)
 
 TagLib::File *CallbackResolver::createFile(TagLib::FileName fileName, bool readAudioProperties, TagLib::AudioProperties::ReadStyle audioPropertiesStyle) const
 {
-    AsyncResolverBaton baton;
+    AsyncResolverBaton baton = AsyncResolverBaton();
     baton.request.data = (void *) &baton;
     baton.resolver = this;
-    baton.fileName = fileName;
+#if _WINDOWS
+    baton.fileName = fileName.toString();
+#else
+	baton.fileName = fileName;
+#endif
 
 #ifdef _WIN32
     if (created_in != GetCurrentThreadId()) {

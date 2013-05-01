@@ -22,6 +22,7 @@ NAN_MODULE_INIT(Tag::Init) {
     Nan::SetPrototypeMethod(tpl, "save", AsyncSaveTag);
     Nan::SetPrototypeMethod(tpl, "saveSync", SyncSaveTag);
     Nan::SetPrototypeMethod(tpl, "isEmpty", IsEmpty);
+	Nan::SetPrototypeMethod(tpl, "close", CloseTag);
     
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("title").ToLocalChecked(), GetTitle, SetTitle);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("album").ToLocalChecked(), GetAlbum, SetAlbum);
@@ -108,6 +109,13 @@ NAN_METHOD(Tag::IsEmpty) {
     info.GetReturnValue().Set(t->tag->isEmpty());
 }
 
+NAN_METHOD(Tag::CloseTag) {
+	Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
+	if (t->fileRef)
+		delete t->fileRef;
+	t->fileRef = NULL;
+}
+
 NAN_METHOD(Tag::SyncSaveTag) {
     Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
     assert(t->fileRef);
@@ -129,7 +137,7 @@ NAN_METHOD(Tag::AsyncSaveTag) {
 
     Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
 
-    AsyncBaton *baton = new AsyncBaton;
+    AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
     baton->tag = t;
     baton->callback.Reset(callback);
@@ -165,7 +173,7 @@ void Tag::AsyncSaveTagAfter(uv_work_t *req) {
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 1, argv);
     }
 
-    //baton->callback.Dispose();
+    baton->callback.Reset();
     delete baton;
 }
 
@@ -228,15 +236,19 @@ NAN_METHOD(Tag::AsyncTag) {
     }
 
 
-    AsyncBaton *baton = new AsyncBaton;
+    AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
-    baton->path = 0;
+    baton->path = NULL;
     baton->tag = NULL;
     baton->error = 0;
 
     if (info[0]->IsString()) {
         String::Utf8Value path(info[0]->ToString());
+//#if _WINDOWS
+//		baton->path = new TagLib::FileName(strdup(*path));
+//#else
         baton->path = strdup(*path);
+//#endif
         baton->callback.Reset(Local<Function>::Cast(info[1]));
 
     }

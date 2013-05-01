@@ -5,7 +5,11 @@
 #include <fileref.h>
 #include <node.h>
 #include <uv.h>
+#ifdef _WINDOWS
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 
 #include <nan.h>
 #include <nan_object_wrap.h>
@@ -54,7 +58,8 @@ public:
     static NAN_METHOD(AsyncSaveTag);
     static NAN_METHOD(SyncSaveTag);
     static NAN_METHOD(SyncTag);
-    static NAN_METHOD(AsyncTag);
+	static NAN_METHOD(AsyncTag);
+	static NAN_METHOD(CloseTag);
     
     static void AsyncTagReadDo(uv_work_t *req);
     static void AsyncTagReadAfter(uv_work_t *req);
