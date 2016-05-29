@@ -39,9 +39,9 @@ struct AsyncBaton {
     int error;
 
 #if _WINDOWS
-	char *path; /* only used by read/tag, not save */
+    char *path; /* only used by read/tag, not save */
 #else
-	TagLib::FileName path; /* only used by read/tag, not save */
+    TagLib::FileName path; /* only used by read/tag, not save */
 #endif
     // OR
     TagLib::String format;
@@ -61,9 +61,9 @@ struct AsyncResolverBaton {
     uv_async_t request;
     const CallbackResolver *resolver;
 #if _WINDOWS
-	TagLib::String fileName;
+    TagLib::String fileName;
 #else
-	TagLib::FileName fileName;
+    TagLib::FileName fileName;
 #endif
     TagLib::String type;
     uv_async_t idler;
@@ -72,7 +72,7 @@ struct AsyncResolverBaton {
 class CallbackResolver : public TagLib::FileRef::FileTypeResolver {
     Nan::Persistent<v8::Function> resolverFunc;
 #if _WINDOWS
-	DWORD created_in;
+    DWORD created_in;
 #else
     const uv_thread_t created_in;
 #endif

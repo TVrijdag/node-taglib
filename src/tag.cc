@@ -22,7 +22,7 @@ NAN_MODULE_INIT(Tag::Init) {
     Nan::SetPrototypeMethod(tpl, "save", AsyncSaveTag);
     Nan::SetPrototypeMethod(tpl, "saveSync", SyncSaveTag);
     Nan::SetPrototypeMethod(tpl, "isEmpty", IsEmpty);
-	Nan::SetPrototypeMethod(tpl, "close", CloseTag);
+    Nan::SetPrototypeMethod(tpl, "close", CloseTag);
     
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("title").ToLocalChecked(), GetTitle, SetTitle);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("album").ToLocalChecked(), GetAlbum, SetAlbum);
@@ -110,10 +110,10 @@ NAN_METHOD(Tag::IsEmpty) {
 }
 
 NAN_METHOD(Tag::CloseTag) {
-	Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
-	if (t->fileRef)
-		delete t->fileRef;
-	t->fileRef = NULL;
+    Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
+    if (t->fileRef)
+        delete t->fileRef;
+    t->fileRef = NULL;
 }
 
 NAN_METHOD(Tag::SyncSaveTag) {
@@ -245,7 +245,7 @@ NAN_METHOD(Tag::AsyncTag) {
     if (info[0]->IsString()) {
         String::Utf8Value path(info[0]->ToString());
 //#if _WINDOWS
-//		baton->path = new TagLib::FileName(strdup(*path));
+//        baton->path = new TagLib::FileName(strdup(*path));
 //#else
         baton->path = strdup(*path);
 //#endif

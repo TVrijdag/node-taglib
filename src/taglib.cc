@@ -220,7 +220,7 @@ void AsyncReadFileDo(uv_work_t *req) {
 
     if (baton->path) {
 #if _WINDOWS
-		baton->error = node_taglib::CreateFileRefPath(TagLib::FileName(baton->path), &f);
+        baton->error = node_taglib::CreateFileRefPath(TagLib::FileName(baton->path), &f);
 #else
         baton->error = node_taglib::CreateFileRefPath(baton->path, &f);
 #endif
@@ -273,7 +273,7 @@ void AsyncReadFileAfter(uv_work_t *req) {
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 3, argv);
 
         delete baton->fileRef;
-		baton->fileRef = NULL;
+        baton->fileRef = NULL;
         delete baton;
         baton = NULL;
     }
@@ -343,7 +343,7 @@ void CallbackResolver::stopIdling(uv_async_t *handle)
 void CallbackResolver::invokeResolver(AsyncResolverBaton *baton)
 {
     Nan::HandleScope scope;
-	Handle<Value> argv[] = { TagLibStringToString(baton->fileName) };
+    Handle<Value> argv[] = { TagLibStringToString(baton->fileName) };
     Local<Value> ret = Nan::Call(Nan::New(baton->resolver->resolverFunc), Nan::GetCurrentContext()->Global(), 1, argv).ToLocalChecked();
     if (!ret->IsString()) {
         baton->type = TagLib::String::null;
@@ -361,7 +361,7 @@ TagLib::File *CallbackResolver::createFile(TagLib::FileName fileName, bool readA
 #if _WINDOWS
     baton.fileName = fileName.toString();
 #else
-	baton.fileName = fileName;
+    baton.fileName = fileName;
 #endif
 
 #ifdef _WIN32
