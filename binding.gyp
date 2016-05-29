@@ -1,4 +1,15 @@
 {
+  "conditions": [
+    ['OS=="win"', {
+      "variables": {
+         "taglib%": "C:/taglib"
+      }
+    }, {
+      "variables": {    
+         "taglib%": "/usr"
+      }
+    }]
+  ],
   "targets": [
     {
       "target_name": "taglib",
@@ -10,31 +21,30 @@
           # copied from libxmljs
           'xcode_settings': {
             'OTHER_CFLAGS': [
-              '<!@(taglib-config --cflags)'
+              '<!@(<(taglib)/bin/taglib-config --cflags)'
             ]
           }
         }, {
           
         }],
         ['OS=="win"', {
-          'libraries': ['C:/taglib/lib/tag.lib'],
+          'libraries': ['<(taglib)/lib/tag.lib'],
           'defines': [
             '_WINDOWS',
             # to avoid problems with winsock2 inclusion in windows.h
             'WIN32_LEAN_AND_MEAN'
           ],
-          'include_dirs': ['C:/taglib/include/taglib'],
-         "copies":
-         [
-            {
-               'destination': '<(module_root_dir)/build/Release',
-               'files': ['C:/taglib/bin/tag.dll', 'C:/taglib/bin/zlib.dll', 'C:/taglib/bin/zlibd.dll']
-            }
-         ]
+          'include_dirs': ['<(taglib)/include/taglib'],
+          "copies": [
+             {
+                'destination': '<(module_root_dir)/build/Release',
+                'files': ['<(taglib)/bin/tag.dll', '<(taglib)/bin/zlib.dll', '<(taglib)/bin/zlibd.dll']
+             }
+          ]
         }, { # OS!="win"
-          'libraries': ['<!(taglib-config --libs)'],
+          'libraries': ['<!(<(taglib)/bin/taglib-config --libs)'],
           'cflags': [
-            '<!@(taglib-config --cflags)'
+            '<!@(<(taglib)/bin/taglib-config --cflags)'
           ]
         }]
       ]
