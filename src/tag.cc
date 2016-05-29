@@ -301,7 +301,7 @@ void Tag::AsyncTagReadAfter(uv_work_t *req) {
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 2, argv);
     }
 
-    //baton->callback.Dispose();
+    baton->callback.Reset();
     delete baton->path;
     delete baton;
 }
