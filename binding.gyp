@@ -13,7 +13,7 @@
   "targets": [
     {
       "target_name": "taglib",
-      "sources": ["src/bufferstream.cc", "src/tag.cc", "src/taglib.cc"],
+      "sources": ["src/bufferstream.cc", "src/metadata.cc", "src/taglib.cc"],
       "include_dirs": ["<!(node -e \"require('nan')\")"],
       "conditions": [
         ['OS=="mac"', {

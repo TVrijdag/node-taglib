@@ -116,10 +116,7 @@ a string as specified in [Formats](#formats).
 
 ### Metadata
 
-**NOTE: A Metadata object should *NOT* be created using `new`. Instead use `read()`
-or `readSync()`**
-
-A Metadata object allows _read-write_ access to all the tag fields. All audio 
+Result from `read()` and `readAsync()`. A Metadata object allows _read-write_ access to all the tag fields. All audio 
 properties are read-only. For valid field names see `read()` above.
 
 To get a value, simply access the field -- `metadata.artist`.

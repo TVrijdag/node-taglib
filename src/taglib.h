@@ -5,18 +5,11 @@
 #include <tag.h>
 #include <node.h>
 #include <uv.h>
-#ifdef _WINDOWS
-#include <time.h>
-#else
-#include <sys/time.h>
-#endif
-
 #include <node_version.h>
-
 #include <nan.h>
 
 namespace node_taglib {
-class Tag;
+class Metadata;
 class BufferStream;
 
 /**
@@ -29,9 +22,6 @@ TagLib::File *createFile(TagLib::IOStream *stream, TagLib::String format);
 v8::Local<v8::String> ErrorToString(int error);
 v8::Local<v8::Value> TagLibStringToString( TagLib::String s );
 TagLib::String NodeStringToTagLibString( v8::Local<v8::Value> s );
-void AsyncReadFile(const Nan::FunctionCallbackInfo< v8::Value > &args);
-void AsyncReadFileDo(uv_work_t *req);
-void AsyncReadFileAfter(uv_work_t *req);
 
 struct AsyncBaton {
     uv_work_t request;
@@ -50,7 +40,7 @@ struct AsyncBaton {
                           // so don't do BufferStream deletion
 
     TagLib::FileRef *fileRef; /* only used by taglib.read */
-    Tag *tag; /* only used by taglib.tag */
+    Metadata *metadata; /* only used by taglib.tag */
 };
 
 void AddResolvers(const Nan::FunctionCallbackInfo< v8::Value >& args);

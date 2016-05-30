@@ -1,4 +1,4 @@
-#include "tag.h"
+#include "metadata.h"
 
 #include <errno.h>
 #include <string.h>
@@ -14,15 +14,14 @@ using namespace node;
 
 namespace node_taglib {
 
-NAN_MODULE_INIT(Tag::Init) {
+NAN_MODULE_INIT(Metadata::Init) {
     v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>();
-    tpl->SetClassName(Nan::New("Tag").ToLocalChecked());
+    tpl->SetClassName(Nan::New("Metadata").ToLocalChecked());
     tpl->InstanceTemplate()->SetInternalFieldCount(1);
     
-    Nan::SetPrototypeMethod(tpl, "save", AsyncSaveTag);
-    Nan::SetPrototypeMethod(tpl, "saveSync", SyncSaveTag);
-    Nan::SetPrototypeMethod(tpl, "isEmpty", IsEmpty);
-    Nan::SetPrototypeMethod(tpl, "close", CloseTag);
+    Nan::SetPrototypeMethod(tpl, "save", AsyncSaveMetadata);
+    Nan::SetPrototypeMethod(tpl, "saveSync", SyncSaveMetadata);
+    Nan::SetPrototypeMethod(tpl, "close", CloseMetadata);
     
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("title").ToLocalChecked(), GetTitle, SetTitle);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("album").ToLocalChecked(), GetAlbum, SetAlbum);
@@ -33,100 +32,95 @@ NAN_MODULE_INIT(Tag::Init) {
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("genre").ToLocalChecked(), GetGenre, SetGenre);
     
     constructor().Reset(Nan::GetFunction(tpl).ToLocalChecked());
-    Nan::Set(target, Nan::New("Tag").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
-    Nan::SetMethod(target, "tag", AsyncTag);
-    Nan::SetMethod(target, "tagSync", SyncTag);
+    //Nan::Set(target, Nan::New("Metadata").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
+    Nan::SetMethod(target, "read", AsyncReadMetadata);
+    Nan::SetMethod(target, "readSync", SyncReadMetadata);
 }
 
-Tag::Tag(TagLib::FileRef * ffileRef) : tag(ffileRef->tag()), fileRef(ffileRef) { }
+Metadata::Metadata(TagLib::FileRef * ffileRef) : tag(ffileRef->tag()), fileRef(ffileRef) { }
 
-Tag::~Tag() {
+Metadata::~Metadata() {
     if (fileRef)
         delete fileRef;
     fileRef = NULL;
     tag = NULL;
 }
 
-inline Tag * unwrapTag(const Nan::PropertyCallbackInfo<v8::Value>& info) {
-  return Nan::ObjectWrap::Unwrap<Tag>(info.Holder());
+inline Metadata * unwrapMetadata(const Nan::PropertyCallbackInfo<v8::Value>& info) {
+  return Nan::ObjectWrap::Unwrap<Metadata>(info.Holder());
 }
-inline Tag * unwrapTag(const Nan::PropertyCallbackInfo<void>& info) {
-  return Nan::ObjectWrap::Unwrap<Tag>(info.Holder());
-}
-
-
-NAN_GETTER(Tag::GetTitle) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapTag(info)->tag->title()));
-}
-NAN_SETTER(Tag::SetTitle) {
-    unwrapTag(info)->tag->setTitle(NodeStringToTagLibString(value));  
+inline Metadata * unwrapMetadata(const Nan::PropertyCallbackInfo<void>& info) {
+  return Nan::ObjectWrap::Unwrap<Metadata>(info.Holder());
 }
 
-NAN_GETTER(Tag::GetArtist) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapTag(info)->tag->artist()));
+
+NAN_GETTER(Metadata::GetTitle) {
+    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->title()));
 }
-NAN_SETTER(Tag::SetArtist) {
-    unwrapTag(info)->tag->setArtist(NodeStringToTagLibString(value));  
+NAN_SETTER(Metadata::SetTitle) {
+    unwrapMetadata(info)->tag->setTitle(NodeStringToTagLibString(value));  
 }
 
-NAN_GETTER(Tag::GetAlbum) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapTag(info)->tag->album()));
+NAN_GETTER(Metadata::GetArtist) {
+    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->artist()));
 }
-NAN_SETTER(Tag::SetAlbum) {
-    unwrapTag(info)->tag->setAlbum(NodeStringToTagLibString(value));  
-}
-
-NAN_GETTER(Tag::GetComment) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapTag(info)->tag->comment()));
-}
-NAN_SETTER(Tag::SetComment) {
-    unwrapTag(info)->tag->setComment(NodeStringToTagLibString(value));  
+NAN_SETTER(Metadata::SetArtist) {
+    unwrapMetadata(info)->tag->setArtist(NodeStringToTagLibString(value));  
 }
 
-NAN_GETTER(Tag::GetTrack) {
-    info.GetReturnValue().Set(unwrapTag(info)->tag->track());
+NAN_GETTER(Metadata::GetAlbum) {
+    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->album()));
 }
-NAN_SETTER(Tag::SetTrack) {
-    unwrapTag(info)->tag->setTrack(value->IntegerValue());  
-}
-
-NAN_GETTER(Tag::GetYear) {
-    info.GetReturnValue().Set(unwrapTag(info)->tag->year());
-}
-NAN_SETTER(Tag::SetYear) {
-    unwrapTag(info)->tag->setYear(value->IntegerValue());  
+NAN_SETTER(Metadata::SetAlbum) {
+    unwrapMetadata(info)->tag->setAlbum(NodeStringToTagLibString(value));  
 }
 
-NAN_GETTER(Tag::GetGenre) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapTag(info)->tag->genre()));
+NAN_GETTER(Metadata::GetComment) {
+    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->comment()));
 }
-NAN_SETTER(Tag::SetGenre) {
-    unwrapTag(info)->tag->setGenre(NodeStringToTagLibString(value));  
-}
-
-NAN_METHOD(Tag::IsEmpty) {
-    Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
-    info.GetReturnValue().Set(t->tag->isEmpty());
+NAN_SETTER(Metadata::SetComment) {
+    unwrapMetadata(info)->tag->setComment(NodeStringToTagLibString(value));  
 }
 
-NAN_METHOD(Tag::CloseTag) {
-    Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
+NAN_GETTER(Metadata::GetTrack) {
+    info.GetReturnValue().Set(unwrapMetadata(info)->tag->track());
+}
+NAN_SETTER(Metadata::SetTrack) {
+    unwrapMetadata(info)->tag->setTrack(value->IntegerValue());  
+}
+
+NAN_GETTER(Metadata::GetYear) {
+    info.GetReturnValue().Set(unwrapMetadata(info)->tag->year());
+}
+NAN_SETTER(Metadata::SetYear) {
+    unwrapMetadata(info)->tag->setYear(value->IntegerValue());  
+}
+
+NAN_GETTER(Metadata::GetGenre) {
+    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->genre()));
+}
+NAN_SETTER(Metadata::SetGenre) {
+    unwrapMetadata(info)->tag->setGenre(NodeStringToTagLibString(value));  
+}
+
+NAN_METHOD(Metadata::CloseMetadata) {
+    Metadata *t = ObjectWrap::Unwrap<Metadata>(info.Holder());
     if (t->fileRef)
         delete t->fileRef;
     t->fileRef = NULL;
 }
 
-NAN_METHOD(Tag::SyncSaveTag) {
-    Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
+NAN_METHOD(Metadata::SyncSaveMetadata) {
+    Metadata *m = ObjectWrap::Unwrap<Metadata>(info.Holder());
 
     // Check whether file descriptor is open
-    if (t->fileRef == NULL) {
+    if (m->fileRef == NULL) {
         Nan::ThrowError("Failed to save file: the file descriptor has already been closed");
         return;
     }
 
-    assert(t->fileRef);
-    bool success = t->fileRef->save();
+    assert(m->fileRef);
+    bool success = m->fileRef->save();
     if (success)
         info.GetReturnValue().SetUndefined();
     else
@@ -134,7 +128,7 @@ NAN_METHOD(Tag::SyncSaveTag) {
         //TODO: filename
 }
 
-NAN_METHOD(Tag::AsyncSaveTag) {
+NAN_METHOD(Metadata::AsyncSaveMetadata) {
     if (info.Length() >= 1 && !info[0]->IsFunction()) {
         Nan::ThrowError("Expected callback function as first argument");
         return;
@@ -142,36 +136,36 @@ NAN_METHOD(Tag::AsyncSaveTag) {
 
     Local<Function> callback = Local<Function>::Cast(info[0]);
 
-    Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
+    Metadata *m = ObjectWrap::Unwrap<Metadata>(info.Holder());
 
     // Check whether file descriptor is open
-    if (t->fileRef == NULL) {
+    if (m->fileRef == NULL) {
         Nan::ThrowError("Failed to save file: the file descriptor has already been closed");
         return;
     }
 
     AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
-    baton->tag = t;
+    baton->metadata = m;
     baton->callback.Reset(callback);
     baton->error = 1;
 
-    uv_queue_work(uv_default_loop(), &baton->request, Tag::AsyncSaveTagDo, (uv_after_work_cb)Tag::AsyncSaveTagAfter);
+    uv_queue_work(uv_default_loop(), &baton->request, Metadata::AsyncSaveMetadataDo, (uv_after_work_cb)Metadata::AsyncSaveMetadataAfter);
 
     info.GetReturnValue().SetUndefined();
 }
 
-void Tag::AsyncSaveTagDo(uv_work_t *req) {
+void Metadata::AsyncSaveMetadataDo(uv_work_t *req) {
     AsyncBaton *baton = static_cast<AsyncBaton*>(req->data);
 
     //assert(baton->tag->fileRef);
-    if (baton->tag->fileRef == NULL)
+    if (baton->metadata->fileRef == NULL)
         baton->error = true;
     else
-        baton->error = !baton->tag->fileRef->save();
+        baton->error = !baton->metadata->fileRef->save();
 }
 
-void Tag::AsyncSaveTagAfter(uv_work_t *req) {
+void Metadata::AsyncSaveMetadataAfter(uv_work_t *req) {
     Isolate* isolate = Isolate::GetCurrent();
     HandleScope scope(isolate);
 
@@ -180,12 +174,12 @@ void Tag::AsyncSaveTagAfter(uv_work_t *req) {
     if (baton->error) {
         Local<Object> error = Nan::New<Object>();
         // Check whether the file descriptor was closed
-        if (baton->tag->fileRef == NULL) {
+        if (baton->metadata->fileRef == NULL) {
             error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file: the file descriptor has already been closed").ToLocalChecked());
         }
         else {
             error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file").ToLocalChecked());
-            error->Set(Nan::New("path").ToLocalChecked(), Nan::New(baton->tag->fileRef->file()->name()).ToLocalChecked());
+            error->Set(Nan::New("path").ToLocalChecked(), Nan::New(baton->metadata->fileRef->file()->name()).ToLocalChecked());
         }
         Handle<Value> argv[] = { error };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 1, argv);
@@ -199,7 +193,7 @@ void Tag::AsyncSaveTagAfter(uv_work_t *req) {
     delete baton;
 }
 
-NAN_METHOD(Tag::SyncTag) {
+NAN_METHOD(Metadata::SyncReadMetadata) {
     TagLib::FileRef *f = 0;
     int error = 0;
 
@@ -225,14 +219,14 @@ NAN_METHOD(Tag::SyncTag) {
         return;
     }
 
-    Tag * tag = new Tag(f);
+    Metadata * metadata = new Metadata(f);
     Local<Object> inst = Nan::NewInstance(Nan::New(constructor())).ToLocalChecked();
-    tag->Wrap(inst);
+    metadata->Wrap(inst);
 
     info.GetReturnValue().Set(inst);
 }
 
-NAN_METHOD(Tag::AsyncTag) {
+NAN_METHOD(Metadata::AsyncReadMetadata) {
     if (info.Length() < 1) {
         Nan::ThrowError("Expected string or buffer as first argument");
         return;
@@ -261,7 +255,7 @@ NAN_METHOD(Tag::AsyncTag) {
     AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
     baton->path = NULL;
-    baton->tag = NULL;
+    baton->metadata = NULL;
     baton->error = 0;
 
     if (info[0]->IsString()) {
@@ -280,12 +274,12 @@ NAN_METHOD(Tag::AsyncTag) {
         baton->callback.Reset(Local<Function>::Cast(info[2]));
     }
 
-    uv_queue_work(uv_default_loop(), &baton->request, Tag::AsyncTagReadDo, (uv_after_work_cb)Tag::AsyncTagReadAfter);
+    uv_queue_work(uv_default_loop(), &baton->request, Metadata::AsyncMetadataReadDo, (uv_after_work_cb)Metadata::AsyncMetadataReadAfter);
 
     info.GetReturnValue().SetUndefined();
 }
 
-void Tag::AsyncTagReadDo(uv_work_t *req) {
+void Metadata::AsyncMetadataReadDo(uv_work_t *req) {
     AsyncBaton *baton = static_cast<AsyncBaton*>(req->data);
 
     TagLib::FileRef *f;
@@ -299,11 +293,11 @@ void Tag::AsyncTagReadDo(uv_work_t *req) {
     }
 
     if (baton->error == 0) {
-        baton->tag = new Tag(f);
+        baton->metadata = new Metadata(f);
     }
 }
 
-void Tag::AsyncTagReadAfter(uv_work_t *req) {
+void Metadata::AsyncMetadataReadAfter(uv_work_t *req) {
     Isolate* isolate = Isolate::GetCurrent();
     HandleScope scope(isolate);
 
@@ -318,7 +312,7 @@ void Tag::AsyncTagReadAfter(uv_work_t *req) {
     }
     else {
         Local<Object> inst = Nan::NewInstance(Nan::New(constructor())).ToLocalChecked();
-        baton->tag->Wrap(inst);
+        baton->metadata->Wrap(inst);
         Handle<Value> argv[] = { Nan::Null(), inst };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 2, argv);
     }

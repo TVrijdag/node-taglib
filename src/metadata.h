@@ -5,17 +5,11 @@
 #include <fileref.h>
 #include <node.h>
 #include <uv.h>
-#ifdef _WINDOWS
-#include <time.h>
-#else
-#include <sys/time.h>
-#endif
-
 #include <nan.h>
 #include <nan_object_wrap.h>
 
 namespace node_taglib {
-class Tag : public Nan::ObjectWrap {
+class Metadata : public Nan::ObjectWrap {
 
 private:
     TagLib::Tag * tag;
@@ -25,8 +19,8 @@ private:
 
 public:
     static NAN_MODULE_INIT(Init);
-    Tag(TagLib::FileRef * fileRef);
-    ~Tag();
+    Metadata(TagLib::FileRef * fileRef);
+    ~Metadata();
     
     static inline Nan::Persistent<v8::Function> & constructor() {
         static Nan::Persistent<v8::Function> my_constructor;
@@ -54,17 +48,16 @@ public:
     static NAN_GETTER(GetGenre);
     static NAN_SETTER(SetGenre);
     
-    static NAN_METHOD(IsEmpty);
-    static NAN_METHOD(AsyncSaveTag);
-    static NAN_METHOD(SyncSaveTag);
-    static NAN_METHOD(SyncTag);
-    static NAN_METHOD(AsyncTag);
-    static NAN_METHOD(CloseTag);
+    static NAN_METHOD(CloseMetadata);
+    static NAN_METHOD(AsyncSaveMetadata);
+    static NAN_METHOD(SyncSaveMetadata);
+    static NAN_METHOD(SyncReadMetadata);
+    static NAN_METHOD(AsyncReadMetadata);
     
-    static void AsyncTagReadDo(uv_work_t *req);
-    static void AsyncTagReadAfter(uv_work_t *req);
-    static void AsyncSaveTagDo(uv_work_t *req);
-    static void AsyncSaveTagAfter(uv_work_t *req);
+    static void AsyncMetadataReadDo(uv_work_t *req);
+    static void AsyncMetadataReadAfter(uv_work_t *req);
+    static void AsyncSaveMetadataDo(uv_work_t *req);
+    static void AsyncSaveMetadataAfter(uv_work_t *req);
 };
 }
 #endif

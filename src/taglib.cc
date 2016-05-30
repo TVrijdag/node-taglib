@@ -36,8 +36,7 @@
 #include <Windows.h> // older versions
 #endif
 
-#include "audioproperties.h"
-#include "tag.h"
+#include "metadata.h"
 #include "bufferstream.h"
 
 using namespace v8;
@@ -54,7 +53,7 @@ int CreateFileRefPath(TagLib::FileName path, TagLib::FileRef **ref) {
     else {
         f = new TagLib::FileRef(path);
 
-        if ( f->isNull() || !f->tag() )
+        if ( f->isNull() || !f->tag() || f->tag()->isEmpty() )
         {
             error = EINVAL;
             delete f;
@@ -81,7 +80,7 @@ int CreateFileRef(TagLib::IOStream *stream, TagLib::String format, TagLib::FileR
 
     f = new TagLib::FileRef(file);
 
-    if (f->isNull() || !f->tag())
+    if (f->isNull() || !f->tag() || f->tag()->isEmpty() )
     {
         error = EINVAL;
         delete f;
@@ -160,131 +159,6 @@ Local< String > ErrorToString(int error) {
     return Nan::New<String>(err).ToLocalChecked();
 }
 
-void AsyncReadFile(const Nan::FunctionCallbackInfo< v8::Value >& args) {
-    Isolate* isolate = Isolate::GetCurrent();
-    HandleScope scope(isolate);
-
-    if (args.Length() < 1) {
-        Nan::ThrowError("Expected string or buffer as first argument");
-        return;
-    }
-
-    if (args[0]->IsString()) {
-        if (args.Length() < 2 || !args[1]->IsFunction()) {
-            Nan::ThrowError("Expected callback function as second argument");
-            return;
-        }
-    }
-    else if (Buffer::HasInstance(args[0])) {
-        if (args.Length() < 2 || !args[1]->IsString()) {
-            Nan::ThrowError("Expected string 'format' as second argument");
-            return;
-        }
-        if (args.Length() < 3 || !args[2]->IsFunction()) {
-            Nan::ThrowError("Expected callback function as third argument");
-            return;
-        }
-    }
-    else {
-        Nan::ThrowError("Expected string or buffer as first argument");
-        return;
-    }
-
-    AsyncBaton *baton = new AsyncBaton();
-    baton->request.data = baton;
-    baton->path = 0;
-    baton->format = TagLib::String::null;
-    baton->stream = 0;
-    baton->error = 0;
-
-    if (args[0]->IsString()) {
-        String::Utf8Value path(args[0]->ToString());
-        baton->path = strdup(*path);
-        baton->callback.Reset(Local<Function>::Cast(args[1]));
-
-    }
-    else {
-        baton->format = NodeStringToTagLibString(args[1]->ToString());
-        baton->stream = new BufferStream(args[0]->ToObject());
-        baton->callback.Reset(Local<Function>::Cast(args[2]));
-    }
-
-    uv_queue_work(uv_default_loop(), &baton->request, AsyncReadFileDo, (uv_after_work_cb)AsyncReadFileAfter);
-
-    args.GetReturnValue().SetUndefined();
-}
-
-void AsyncReadFileDo(uv_work_t *req) {
-    AsyncBaton *baton = static_cast<AsyncBaton*>(req->data);
-
-    TagLib::FileRef *f;
-
-    if (baton->path) {
-#if _WINDOWS
-        baton->error = node_taglib::CreateFileRefPath(TagLib::FileName(baton->path), &f);
-#else
-        baton->error = node_taglib::CreateFileRefPath(baton->path, &f);
-#endif
-    }
-    else {
-        assert(baton->stream);
-        baton->error = node_taglib::CreateFileRef(baton->stream, baton->format, &f);
-    }
-
-    if (baton->error == 0) {
-        baton->fileRef = f;
-    }
-}
-
-void AsyncReadFileAfter(uv_work_t *req) {
-    AsyncBaton *baton = static_cast<AsyncBaton*>(req->data);
-    Nan::HandleScope scope;
-    if (baton->error) {
-        Local<Object> error = Nan::New<Object>();
-        error->Set(Nan::New("code").ToLocalChecked(), Nan::New(baton->error));
-        error->Set(Nan::New("message").ToLocalChecked(), ErrorToString(baton->error));
-        Handle<Value> argv[] = { error, Nan::Null(), Nan::Null() };
-        Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 3, argv);
-    }
-    else {
-        // read the data, put it in objects and delete the fileref
-        TagLib::Tag *tag = baton->fileRef->tag();
-        Local<Object> tagObj = Nan::New<Object>();
-        if (!tag->isEmpty()) {
-            tagObj->Set(Nan::New("album").ToLocalChecked(), TagLibStringToString(tag->album()));
-            tagObj->Set(Nan::New("artist").ToLocalChecked(), TagLibStringToString(tag->artist()));
-            tagObj->Set(Nan::New("comment").ToLocalChecked(), TagLibStringToString(tag->comment()));
-            tagObj->Set(Nan::New("genre").ToLocalChecked(), TagLibStringToString(tag->genre()));
-            tagObj->Set(Nan::New("path").ToLocalChecked(), TagLibStringToString(baton->path));
-            tagObj->Set(Nan::New("title").ToLocalChecked(), TagLibStringToString(tag->title()));
-            tagObj->Set(Nan::New("track").ToLocalChecked(), Nan::New(tag->track()));
-            tagObj->Set(Nan::New("year").ToLocalChecked(), Nan::New(tag->year()));
-        }
-
-        TagLib::AudioProperties *props = baton->fileRef->audioProperties();
-        Local<Object> propsObj = Nan::New<Object>();
-        if (props) {
-            propsObj->Set(Nan::New("length").ToLocalChecked(), Nan::New(props->length()));
-            propsObj->Set(Nan::New("bitrate").ToLocalChecked(), Nan::New(props->bitrate()));
-            propsObj->Set(Nan::New("sampleRate").ToLocalChecked(), Nan::New(props->sampleRate()));
-            propsObj->Set(Nan::New("channels").ToLocalChecked(), Nan::New(props->channels()));
-        }
-
-        Handle<Value> argv[] = { Nan::Null(), tagObj, propsObj };
-        Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 3, argv);
-
-        delete baton->fileRef;
-        baton->fileRef = NULL;
-        if (baton->path)
-            delete baton->path;
-        baton->path = NULL;
-        if (baton->stream)
-            delete baton->stream;
-        baton->stream = NULL;
-        delete baton;
-        baton = NULL;
-    }
-}
 
 Local< Value > TagLibStringToString( TagLib::String s )
 {
@@ -413,11 +287,10 @@ init (Handle<Object> target)
     Nan::Set(target, Nan::New("WITH_MP4").ToLocalChecked(), Nan::False());
 #endif
 
-    Nan::SetMethod(target, "read", AsyncReadFile);
 #ifdef ENABLE_RESOLVERS
     Nan::SetMethod(target, "addResolvers", AddResolvers);
 #endif
-    Tag::Init(target);
+    Metadata::Init(target);
 }
 
 NODE_MODULE(taglib, init)
