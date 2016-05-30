@@ -76,7 +76,8 @@ The function you will most likely want to use. `callback` should have signature
 For the distinction between these and `Metadata`, see `Metadata` below.
 
 If there was an error reading the file, `err` will be non-null and `metadata`
-will be `null`.
+will be `null`.  The error will be an object with field `code` having the 
+integer error code (`errno.h`) and field `message` will have a string representation.
 
 `metadata` will be a Metadata object with the following tag information.
 (node-taglib currently supports only the fields common to all formats):
@@ -107,18 +108,8 @@ a string as specified in [Formats](#formats).
 Read the metadata from the file at `path` _synchronously_. Returns a `Metadata`. If
 errors occurred, throws an error.
 
-Read the metadata from `buffer` assuming that it is a `format` file. See
-[Formats](#formats)
-
-### read(path, callback)
-### read(buffer, format, callback)
-
-Read the metadata from the file at `path` _asynchronously_. The callback should have
-signature `(err, metadata)`. On success, `err` will be `null` and `metadata` will be
-a `Metadata`. If errors occurred, `err` will contain the error and
-`metadata` will be `null`. `err` will be an object with field `code` having the
-integer error code (`errno.h`) and field `message` will have a string
-representation.
+The error will be an object with field `code` having the integer error code
+(`errno.h`) and field `message` will have a string representation.
 
 In the second variant, which can read from a buffer, `format` should be
 a string as specified in [Formats](#formats).
