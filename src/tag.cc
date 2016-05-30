@@ -118,12 +118,19 @@ NAN_METHOD(Tag::CloseTag) {
 
 NAN_METHOD(Tag::SyncSaveTag) {
     Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
+
+    // Check whether file descriptor is open
+    if (t->fileRef == NULL) {
+        Nan::ThrowError("Failed to save file: the file descriptor has already been closed");
+        return;
+    }
+
     assert(t->fileRef);
     bool success = t->fileRef->save();
     if (success)
         info.GetReturnValue().SetUndefined();
     else
-        Nan::ThrowError("Failed to save file.");
+        Nan::ThrowError("Failed to save file");
         //TODO: filename
 }
 
@@ -136,6 +143,12 @@ NAN_METHOD(Tag::AsyncSaveTag) {
     Local<Function> callback = Local<Function>::Cast(info[0]);
 
     Tag *t = ObjectWrap::Unwrap<Tag>(info.Holder());
+
+    // Check whether file descriptor is open
+    if (t->fileRef == NULL) {
+        Nan::ThrowError("Failed to save file: the file descriptor has already been closed");
+        return;
+    }
 
     AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
@@ -151,8 +164,11 @@ NAN_METHOD(Tag::AsyncSaveTag) {
 void Tag::AsyncSaveTagDo(uv_work_t *req) {
     AsyncBaton *baton = static_cast<AsyncBaton*>(req->data);
 
-    assert(baton->tag->fileRef);
-    baton->error = !baton->tag->fileRef->save();
+    //assert(baton->tag->fileRef);
+    if (baton->tag->fileRef == NULL)
+        baton->error = true;
+    else
+        baton->error = !baton->tag->fileRef->save();
 }
 
 void Tag::AsyncSaveTagAfter(uv_work_t *req) {
@@ -163,8 +179,14 @@ void Tag::AsyncSaveTagAfter(uv_work_t *req) {
 
     if (baton->error) {
         Local<Object> error = Nan::New<Object>();
-        error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file").ToLocalChecked());
-        error->Set(Nan::New("path").ToLocalChecked(), Nan::New(baton->tag->fileRef->file()->name()).ToLocalChecked());
+        // Check whether the file descriptor was closed
+        if (baton->tag->fileRef == NULL) {
+            error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file: the file descriptor has already been closed").ToLocalChecked());
+        }
+        else {
+            error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file").ToLocalChecked());
+            error->Set(Nan::New("path").ToLocalChecked(), Nan::New(baton->tag->fileRef->file()->name()).ToLocalChecked());
+        }
         Handle<Value> argv[] = { error };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 1, argv);
     }
