@@ -52,12 +52,15 @@ tag = undefined;
 
 ### via npm (Recommended)
 
-    npm install taglib
+    npm install --save git://github.com/TVrijdag/node-taglib.git
+    
+    # or use another directory where taglib headers are located (default /usr or C:/taglib)
+    npm install --save git://github.com/TVrijdag/node-taglib.git --taglib=/path/to/taglib
 
 ### From source
 
     # make sure you have node and taglib installed
-    git clone git://github.com/nikhilm/node-taglib.git
+    git clone git://github.com/TVrijdag/node-taglib.git
     cd node-taglib
     npm install .
     node examples/simple.js /path/to/mp3_or_ogg_file
