@@ -30,9 +30,10 @@
 #include <itfile.h>
 #include <xmfile.h>
 
-#if _WINDOWS
+#if _WINDOWS && WINVER >= 0x0602 // _WIN32_WINNT_WIN8 
 #include <Processthreadsapi.h> // Windows 8 and Windows Server 2012
-// TODO: Or #include <Windows.h> on others
+#elif _WINDOWS
+#include <Windows.h> // older versions
 #endif
 
 #include "audioproperties.h"
