@@ -8,7 +8,7 @@ It requires [node.js](http://nodejs.org) and taglib header files (on Debian syst
 
 node-taglib offers only an abstract interface without giving access to extended
 file-specific attributes. It does allow custom resolvers though. Synchronous
-write support is supported for Tag.
+write support is supported for Metadata.
 
 **NOTE: Asynchronous API requires use of TagLib [from git][taglib-git] since
 certain bugs present in the released v1.7 cause problems.**
@@ -22,30 +22,28 @@ certain bugs present in the released v1.7 cause problems.**
 const taglib = require('taglib');
 
 // asynchronous API
-taglib.tag(path, (err, tag) => {
-    tag.artist; // => "Queen"
-    tag.title = "Erm";
-    tag.saveSync(); // synchronous
+taglib.read(path, (err, metadata) => {
+    metadata.artist; // => "Queen"
+    metadata.title = "Erm";
+    metadata.saveSync(); // synchronous
 });
 
 // synchronous API
-let tag = taglib.tagSync(path);
+let metadata = taglib.readSync(path);
 
-tag.title; // => "Another one bites the dust"
-tag.artist; // => "Kween"
-tag.artist = "Queen";
+metadata.title; // => "Another one bites the dust"
+metadata.artist; // => "Kween"
+metadata.artist = "Queen";
 
-tag.isEmpty(); // => false
-
-tag.saveSync(); // => true
+metadata.saveSync(); // => true
 
 // Or asynchronous
-tag.save((err) => {
+metadata.save((err) => {
 });
 
-// Close the tag and clear reference
-tag.close(); // => true
-tag = undefined;
+// Close the metadata and clear reference
+metadata.close(); // => true
+metadata = undefined;
 ```
 
 ## Installation
@@ -74,16 +72,14 @@ The `examples` show usage.
 ### read(buffer, format, callback)
 
 The function you will most likely want to use. `callback` should have signature
-`callback(err, tag, audioProperties)` where `tag` and `audioProperties` are
-plain-old JavaScript objects. For the distinction between these and `Tag`, see
-`Tag` below.
+`callback(err, metadata)`.
+For the distinction between these and `Metadata`, see `Metadata` below.
 
-If there was an error reading the file, `err` will be non-null and `tag` and
-`audioProperties` will be `null`.
+If there was an error reading the file, `err` will be non-null and `metadata`
+will be `null`.
 
-If no tag was found, `tag` will be an empty object (falsy). `tag` can have the
-following fields. node-taglib currently supports only the fields common to all
-formats:
+`metadata` will be a Metadata object with the following tag information.
+(node-taglib currently supports only the fields common to all formats):
 
 * title   (string)
 * album   (string)
@@ -93,99 +89,92 @@ formats:
 * year    (integer)
 * genre   (string)
 
-If no audio properties could be read, `audioProperties` will be an empty object
-(falsy). The following fields are available in `audioProperties`, all are
-integers:
+In addition, the following audio properties may be available. All of them are:
 
-* length
-* bitrate
-* sampleRate
-* channels
+* length      (integer)
+* bitrate     (integer)
+* sampleRate  (integer)
+* channels    (integer)
 
 Writing audio properties is not supported.
 
 In the second variant, which can read from a buffer, `format` should be
 a string as specified in [Formats](#formats).
 
-### tag(path, callback)
-### tag(buffer, format, callback)
+### readSync(path)
+### readSync(buffer, format)
 
-Read the tag from the file at `path` _asynchronously_. The callback should have
-signature `(err, tag)`. On success, `err` will be `null` and `tag` will be
-a `Tag`. If errors occurred, `err` will contain the error and
-`tag` will be `null`. `err` will be an object with field `code` having the
+Read the metadata from the file at `path` _synchronously_. Returns a `Metadata`. If
+errors occurred, throws an error.
+
+Read the metadata from `buffer` assuming that it is a `format` file. See
+[Formats](#formats)
+
+### read(path, callback)
+### read(buffer, format, callback)
+
+Read the metadata from the file at `path` _asynchronously_. The callback should have
+signature `(err, metadata)`. On success, `err` will be `null` and `metadata` will be
+a `Metadata`. If errors occurred, `err` will contain the error and
+`metadata` will be `null`. `err` will be an object with field `code` having the
 integer error code (`errno.h`) and field `message` will have a string
 representation.
 
 In the second variant, which can read from a buffer, `format` should be
 a string as specified in [Formats](#formats).
 
-### tagSync(path)
-### tagSync(buffer, format)
+### Metadata
 
-Read the tags from the file at `path` _synchronously_. Returns a `Tag`. If
-errors occurred, throws an exception.
+**NOTE: A Metadata object should *NOT* be created using `new`. Instead use `read()`
+or `readSync()`**
 
-Read the tags from `buffer` assuming that it is a `format` file. See
-[Formats](#formats)
+A Metadata object allows _read-write_ access to all the tag fields. All audio 
+properties are read-only. For valid field names see `read()` above.
 
-### Tag
+To get a value, simply access the field -- `metadata.artist`.
 
-**NOTE: A Tag object should *NOT* be created using `new`. Instead use `tag()`
-or `tagSync()`**
-
-A Tag object allows _read-write_ access to all the meta-data fields. For valid
-field names see `read()` above.
-
-To get a value, simply access the field -- `tag.artist`.
-
-To set a value, assign a value to the field -- `tag.year = 2012`. You **will
-have to call `saveSync()`** to actually save the changes to the file on disc.
+To set a value, assign a value to the field -- `metadata.year = 2012`. You **will
+have to call `save()` or `saveSync()`** to actually save the changes to the file on disc.
 
 ##### Large number of files
 
-Due to TagLib's design, every `Tag` object in memory has to keep its backing
+Due to TagLib's design, every `Metadata` object in memory has to keep its backing
 file descriptor open. If you are dealing with a large number of files, you will
 soon run into problems because operating systems impose limits on how many
-files a process can have open simultaneously. If you want to only read tags,
-use `read()` instead as it will immediately close the file after the tag is
-read.
+files a process can have open simultaneously. Use [Metadata.close()](#metadataclose) 
+after the metadata is no longer needed.
 
-### Tag.close()
+### Metadata.close()
 
 Clears the file descriptor such that the issue mentioned above can be prevented. Note 
-that properties and methods of the closed tag will no longer function after closing. 
+that properties and methods of the closed metadata will no longer function after closing. 
 
 ```js
-let tag = taglib.tagSync(path);
-tag.artist; // => "Kween"
-tag.artist = "Queen";
-tag.saveSync(); // => true
-tag.close(); // => true
-tag.artist; // => error
+let metadata = taglib.readSync(path);
+metadata.artist; // => "Kween"
+metadata.artist = "Queen";
+metadata.saveSync(); // => true
+metadata.close(); // => true
+metadata.artist; // => error
 ```
 
-### Tag.save(callback)
+### Metadata.save(callback)
 
-Save any changes in the Tag meta-data to disk _asynchronously_. `callback` will
-be invoked once the save is done, and should have a signature `(err)`. `err`
-will be `null` if the save was successful, otherwise it will be an object with
+Save any changed tag fields in the Metadata object to disk _asynchronously_. 
+`callback` will be invoked once the save is done, and should have a signature `(err)`.
+`err` will be `null` if the save was successful, otherwise it will be an object with
 `message` having the error string and `path` having the file path.
 
-Tag objects obtained from a buffer or those which are closed will throw an 
-exception if `save()` is called.
+Metadata objects obtained from a buffer or those which are closed will throw an 
+error if `save()` is called.
 
-### Tag.saveSync()
+### Metadata.saveSync()
 
-Save any changes in the Tag meta-data to disk _synchronously_. Throws an
-exception if the save failed.
+Save any changed tag fields in the Metadata object to disk _synchronously_. 
+Throws an error if the save failed.
 
-Tag objects obtained from a buffer or those which are closed will throw an 
-exception if `saveSync()` is called.
-
-### Tag.isEmpty()
-
-Returns whether the tag is empty or not.
+Metadata objects obtained from a buffer or those which are closed will throw an 
+error if `saveSync()` is called.
 
 ### taglib.addResolvers(\[resolver1\[, resolver2\[, ...]]])
 
