@@ -19,17 +19,17 @@ certain bugs present in the released v1.7 cause problems.**
 
 ```js
 // load the library
-var taglib = require('taglib');
+const taglib = require('taglib');
 
 // asynchronous API
-taglib.tag(path, function(err, tag) {
+taglib.tag(path, (err, tag) => {
     tag.artist; // => "Queen"
     tag.title = "Erm";
-    tag.saveSync();
+    tag.saveSync(); // synchronous
 });
 
 // synchronous API
-var tag = taglib.tagSync(path);
+let tag = taglib.tagSync(path);
 
 tag.title; // => "Another one bites the dust"
 tag.artist; // => "Kween"
@@ -38,6 +38,14 @@ tag.artist = "Queen";
 tag.isEmpty(); // => false
 
 tag.saveSync(); // => true
+
+// Or asynchronous
+tag.save((err) => {
+});
+
+// Close the tag and clear reference
+tag.close(); // => true
+tag = undefined;
 ```
 
 ## Installation
@@ -140,6 +148,20 @@ files a process can have open simultaneously. If you want to only read tags,
 use `read()` instead as it will immediately close the file after the tag is
 read.
 
+### Tag.close()
+
+Clears the file descriptor such that the issue mentioned above can be prevented. Note 
+that properties and methods of the closed tag will no longer function after closing. 
+
+```js
+let tag = taglib.tagSync(path);
+tag.artist; // => "Kween"
+tag.artist = "Queen";
+tag.saveSync(); // => true
+tag.close(); // => true
+tag.artist; // => error
+```
+
 ### Tag.save(callback)
 
 Save any changes in the Tag meta-data to disk _asynchronously_. `callback` will
@@ -147,10 +169,16 @@ be invoked once the save is done, and should have a signature `(err)`. `err`
 will be `null` if the save was successful, otherwise it will be an object with
 `message` having the error string and `path` having the file path.
 
+Tag objects obtained from a buffer or those which are closed will throw an 
+exception if `save()` is called.
+
 ### Tag.saveSync()
 
 Save any changes in the Tag meta-data to disk _synchronously_. Throws an
 exception if the save failed.
+
+Tag objects obtained from a buffer or those which are closed will throw an 
+exception if `saveSync()` is called.
 
 ### Tag.isEmpty()
 
