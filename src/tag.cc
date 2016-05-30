@@ -325,6 +325,13 @@ void Tag::AsyncTagReadAfter(uv_work_t *req) {
 
     baton->callback.Reset();
     delete baton->path;
+    if (baton->path)
+        delete baton->path;
+    baton->path = NULL;
+    if (baton->stream)
+        delete baton->stream;
+    baton->stream = NULL;
     delete baton;
+    baton = NULL;
 }
 }

@@ -275,6 +275,12 @@ void AsyncReadFileAfter(uv_work_t *req) {
 
         delete baton->fileRef;
         baton->fileRef = NULL;
+        if (baton->path)
+            delete baton->path;
+        baton->path = NULL;
+        if (baton->stream)
+            delete baton->stream;
+        baton->stream = NULL;
         delete baton;
         baton = NULL;
     }
