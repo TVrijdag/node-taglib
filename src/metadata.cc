@@ -30,6 +30,10 @@ NAN_MODULE_INIT(Metadata::Init) {
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("track").ToLocalChecked(), GetTrack, SetTrack);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("year").ToLocalChecked(), GetYear, SetYear);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("genre").ToLocalChecked(), GetGenre, SetGenre);
+    Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("length").ToLocalChecked(), GetAudioLength, NULL);
+    Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("bitrate").ToLocalChecked(), GetAudioBitrate, NULL);
+    Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("sampleRate").ToLocalChecked(), GetAudioSampleRate, NULL);
+    Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("channels").ToLocalChecked(), GetAudioChannels, NULL);
     
     constructor().Reset(Nan::GetFunction(tpl).ToLocalChecked());
     //Nan::Set(target, Nan::New("Metadata").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
@@ -102,6 +106,38 @@ NAN_GETTER(Metadata::GetGenre) {
 NAN_SETTER(Metadata::SetGenre) {
     unwrapMetadata(info)->tag->setGenre(NodeStringToTagLibString(value));  
 }
+
+
+
+NAN_GETTER(Metadata::GetAudioLength) {
+    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
+    if (props) {
+        info.GetReturnValue().Set(props->length());
+    }
+}
+
+NAN_GETTER(Metadata::GetAudioBitrate) {
+    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
+    if (props) {
+        info.GetReturnValue().Set(props->bitrate());
+    }
+}
+
+NAN_GETTER(Metadata::GetAudioSampleRate) {
+    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
+    if (props) {
+        info.GetReturnValue().Set(props->sampleRate());
+    }
+}
+
+NAN_GETTER(Metadata::GetAudioChannels) {
+    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
+    if (props) {
+        info.GetReturnValue().Set(props->channels());
+    }
+}
+
+
 
 NAN_METHOD(Metadata::CloseMetadata) {
     Metadata *t = ObjectWrap::Unwrap<Metadata>(info.Holder());

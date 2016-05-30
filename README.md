@@ -73,13 +73,12 @@ The `examples` show usage.
 
 The function you will most likely want to use. `callback` should have signature
 `callback(err, metadata)`.
-For the distinction between these and `Metadata`, see `Metadata` below.
 
 If there was an error reading the file, `err` will be non-null and `metadata`
 will be `null`.  The error will be an object with field `code` having the 
 integer error code (`errno.h`) and field `message` will have a string representation.
 
-`metadata` will be a Metadata object with the following tag information.
+`metadata` will be a [Metadata](#metadata) object with the following tag information.
 (node-taglib currently supports only the fields common to all formats):
 
 * title   (string)
@@ -97,7 +96,8 @@ In addition, the following audio properties may be available. All of them are:
 * sampleRate  (integer)
 * channels    (integer)
 
-Writing audio properties is not supported.
+These properties are undefined when the audio properties are not available
+for the file or stream. Writing audio properties is not supported.
 
 In the second variant, which can read from a buffer, `format` should be
 a string as specified in [Formats](#formats).

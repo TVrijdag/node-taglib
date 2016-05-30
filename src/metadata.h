@@ -27,6 +27,7 @@ public:
         return my_constructor;
     }
 
+    /* Tag fields */
     static NAN_GETTER(GetTitle);
     static NAN_SETTER(SetTitle);
     
@@ -47,7 +48,14 @@ public:
     
     static NAN_GETTER(GetGenre);
     static NAN_SETTER(SetGenre);
+
+    /* Audio properties */
+    static NAN_GETTER(GetAudioLength);
+    static NAN_GETTER(GetAudioBitrate);
+    static NAN_GETTER(GetAudioSampleRate);
+    static NAN_GETTER(GetAudioChannels);
     
+    /* Methods */
     static NAN_METHOD(CloseMetadata);
     static NAN_METHOD(AsyncSaveMetadata);
     static NAN_METHOD(SyncSaveMetadata);
