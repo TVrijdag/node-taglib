@@ -1,4 +1,4 @@
-var taglib = require('./build/Release/taglib');
+var taglib = require('./index.js');
 var async = require('async');
 var fs = require('fs');
 var match = require('match-files');
@@ -11,7 +11,7 @@ match.find(process.argv[2], {fileFilters: [isMp3]}, function(err, files) {
     var count = 0;
     console.log(files.length, "files");
     async.forEach(files, function(fn, cb) {
-        var tag = taglib.tag(fn, function(err, tag) {
+        taglib.read(fn, function(err, tag) {
             if (err)
                 return cb(err);
             count++;

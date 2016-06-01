@@ -1,4 +1,4 @@
-var taglib = require('./build/Release/taglib');
+var taglib = require('./index.js');
 var async = require('async');
 var fs = require('fs');
 var match = require('match-files');
