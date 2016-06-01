@@ -164,6 +164,10 @@ Throws an error if the save failed.
 Metadata objects obtained from a buffer or those which are closed will throw an 
 error if `saveSync()` is called.
 
+### Metadata.isEmpty()
+
+Returns whether tag fields of the metadata are empty or not.
+
 ### taglib.addResolvers(\[resolver1\[, resolver2\[, ...]]])
 
 Adds JavaScript functions that will be called to resolve the filetype of

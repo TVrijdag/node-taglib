@@ -21,6 +21,7 @@ NAN_MODULE_INIT(Metadata::Init) {
     
     Nan::SetPrototypeMethod(tpl, "save", AsyncSaveMetadata);
     Nan::SetPrototypeMethod(tpl, "saveSync", SyncSaveMetadata);
+    Nan::SetPrototypeMethod(tpl, "isEmpty", IsEmptyMetadata);
     Nan::SetPrototypeMethod(tpl, "close", CloseMetadata);
     
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New("title").ToLocalChecked(), GetTitle, SetTitle);
@@ -170,11 +171,17 @@ NAN_GETTER(Metadata::GetAudioChannels) {
 
 
 
+NAN_METHOD(Metadata::IsEmptyMetadata) {
+    Metadata *m = ObjectWrap::Unwrap<Metadata>(info.Holder());
+    if (m->fileRef)
+        info.GetReturnValue().Set(m->tag->isEmpty());
+}
+
 NAN_METHOD(Metadata::CloseMetadata) {
-    Metadata *t = ObjectWrap::Unwrap<Metadata>(info.Holder());
-    if (t->fileRef)
-        delete t->fileRef;
-    t->fileRef = NULL;
+    Metadata *m = ObjectWrap::Unwrap<Metadata>(info.Holder());
+    if (m->fileRef)
+        delete m->fileRef;
+    m->fileRef = NULL;
 }
 
 NAN_METHOD(Metadata::SyncSaveMetadata) {

@@ -53,10 +53,11 @@ int CreateFileRefPath(TagLib::FileName path, TagLib::FileRef **ref) {
     else {
         f = new TagLib::FileRef(path);
 
-        if ( f->isNull() || !f->tag() || f->tag()->isEmpty() )
+        if ( f->isNull() || !f->tag() )
         {
             error = EINVAL;
             delete f;
+            f = NULL;
         }
     }
 
@@ -80,10 +81,11 @@ int CreateFileRef(TagLib::IOStream *stream, TagLib::String format, TagLib::FileR
 
     f = new TagLib::FileRef(file);
 
-    if (f->isNull() || !f->tag() || f->tag()->isEmpty() )
+    if (f->isNull() || !f->tag() )
     {
         error = EINVAL;
         delete f;
+        f = NULL;
     }
 
     if (error != 0)
@@ -95,7 +97,7 @@ int CreateFileRef(TagLib::IOStream *stream, TagLib::String format, TagLib::FileR
 }
 
 TagLib::File *createFile(TagLib::IOStream *stream, TagLib::String format) {
-    TagLib::File *file = 0;
+    TagLib::File *file = NULL;
     format = format.upper();
     if (format == "MPEG")
         file = new TagLib::MPEG::File(stream, TagLib::ID3v2::FrameFactory::instance());

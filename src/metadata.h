@@ -56,6 +56,7 @@ public:
     static NAN_GETTER(GetAudioChannels);
     
     /* Methods */
+    static NAN_METHOD(IsEmptyMetadata);
     static NAN_METHOD(CloseMetadata);
     static NAN_METHOD(AsyncSaveMetadata);
     static NAN_METHOD(SyncSaveMetadata);
