@@ -59,81 +59,112 @@ inline Metadata * unwrapMetadata(const Nan::PropertyCallbackInfo<void>& info) {
 
 
 NAN_GETTER(Metadata::GetTitle) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->title()));
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        info.GetReturnValue().Set(TagLibStringToString(m->tag->title()));
 }
 NAN_SETTER(Metadata::SetTitle) {
-    unwrapMetadata(info)->tag->setTitle(NodeStringToTagLibString(value));  
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        m->tag->setTitle(NodeStringToTagLibString(value));  
 }
 
 NAN_GETTER(Metadata::GetArtist) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->artist()));
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        info.GetReturnValue().Set(TagLibStringToString(m->tag->artist()));
 }
 NAN_SETTER(Metadata::SetArtist) {
-    unwrapMetadata(info)->tag->setArtist(NodeStringToTagLibString(value));  
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        m->tag->setArtist(NodeStringToTagLibString(value));  
 }
 
 NAN_GETTER(Metadata::GetAlbum) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->album()));
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        info.GetReturnValue().Set(TagLibStringToString(m->tag->album()));
 }
 NAN_SETTER(Metadata::SetAlbum) {
-    unwrapMetadata(info)->tag->setAlbum(NodeStringToTagLibString(value));  
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        m->tag->setAlbum(NodeStringToTagLibString(value));  
 }
 
 NAN_GETTER(Metadata::GetComment) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->comment()));
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        info.GetReturnValue().Set(TagLibStringToString(m->tag->comment()));
 }
 NAN_SETTER(Metadata::SetComment) {
-    unwrapMetadata(info)->tag->setComment(NodeStringToTagLibString(value));  
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        m->tag->setComment(NodeStringToTagLibString(value));  
 }
 
 NAN_GETTER(Metadata::GetTrack) {
-    info.GetReturnValue().Set(unwrapMetadata(info)->tag->track());
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        info.GetReturnValue().Set(m->tag->track());
 }
 NAN_SETTER(Metadata::SetTrack) {
-    unwrapMetadata(info)->tag->setTrack(value->IntegerValue());  
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        m->tag->setTrack(value->IntegerValue());  
 }
 
 NAN_GETTER(Metadata::GetYear) {
-    info.GetReturnValue().Set(unwrapMetadata(info)->tag->year());
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        info.GetReturnValue().Set(m->tag->year());
 }
 NAN_SETTER(Metadata::SetYear) {
-    unwrapMetadata(info)->tag->setYear(value->IntegerValue());  
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        m->tag->setYear(value->IntegerValue());
 }
 
 NAN_GETTER(Metadata::GetGenre) {
-    info.GetReturnValue().Set(TagLibStringToString(unwrapMetadata(info)->tag->genre()));
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        info.GetReturnValue().Set(TagLibStringToString(m->tag->genre()));
 }
 NAN_SETTER(Metadata::SetGenre) {
-    unwrapMetadata(info)->tag->setGenre(NodeStringToTagLibString(value));  
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef)
+        m->tag->setGenre(NodeStringToTagLibString(value));  
 }
-
 
 
 NAN_GETTER(Metadata::GetAudioLength) {
-    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
-    if (props) {
-        info.GetReturnValue().Set(props->length());
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef) {
+        TagLib::AudioProperties *props = m->fileRef->audioProperties();
+        if (props) info.GetReturnValue().Set(props->length());
     }
 }
 
 NAN_GETTER(Metadata::GetAudioBitrate) {
-    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
-    if (props) {
-        info.GetReturnValue().Set(props->bitrate());
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef) {
+        TagLib::AudioProperties *props = m->fileRef->audioProperties();
+        if (props) info.GetReturnValue().Set(props->bitrate());
     }
 }
 
 NAN_GETTER(Metadata::GetAudioSampleRate) {
-    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
-    if (props) {
-        info.GetReturnValue().Set(props->sampleRate());
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef) {
+        TagLib::AudioProperties *props = m->fileRef->audioProperties();
+        if (props) info.GetReturnValue().Set(props->sampleRate());
     }
 }
 
 NAN_GETTER(Metadata::GetAudioChannels) {
-    TagLib::AudioProperties *props = unwrapMetadata(info)->fileRef->audioProperties();
-    if (props) {
-        info.GetReturnValue().Set(props->channels());
+    Metadata *m = unwrapMetadata(info);
+    if (m->fileRef) {
+        TagLib::AudioProperties *props = m->fileRef->audioProperties();
+        if (props) info.GetReturnValue().Set(props->channels());
     }
 }
 
@@ -184,7 +215,7 @@ NAN_METHOD(Metadata::AsyncSaveMetadata) {
     baton->request.data = baton;
     baton->metadata = m;
     baton->callback.Reset(callback);
-    baton->error = 1;
+    baton->error = 0;
 
     uv_queue_work(uv_default_loop(), &baton->request, Metadata::AsyncSaveMetadataDo, (uv_after_work_cb)Metadata::AsyncSaveMetadataAfter);
 
@@ -255,7 +286,7 @@ NAN_METHOD(Metadata::SyncReadMetadata) {
         return;
     }
 
-    Metadata * metadata = new Metadata(f);
+    Metadata *metadata = new Metadata(f);
     Local<Object> inst = Nan::NewInstance(Nan::New(constructor())).ToLocalChecked();
     metadata->Wrap(inst);
 
@@ -354,13 +385,10 @@ void Metadata::AsyncMetadataReadAfter(uv_work_t *req) {
     }
 
     baton->callback.Reset();
-    delete baton->path;
+
     if (baton->path)
         delete baton->path;
     baton->path = NULL;
-    if (baton->stream)
-        delete baton->stream;
-    baton->stream = NULL;
     delete baton;
     baton = NULL;
 }
