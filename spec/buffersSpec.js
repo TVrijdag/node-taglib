@@ -5,107 +5,10 @@ var assert = require('assert'),
 
 vows.describe('taglib bindings: Buffers')
 .addBatch({
-  'reading metadata from mp3 buffer': {
+  'read metadata from mp3 buffer': {
     topic: function() {
       var buf = fs.readFileSync(__dirname+'/sample.mp3');
       Taglib.read(buf, 'mpeg', this.callback);
-    },
-
-    'should be called with three arguments': function (err, tag, props) {
-      assert.isNull(err);
-      assert.isObject(tag);
-      assert.isObject(props);
-    },
-
-    'reading tags': {
-      topic: function() {
-        var buf = fs.readFileSync(__dirname+'/sample.mp3');
-        Taglib.read(buf, 'mpeg', this.callback);
-      },
-
-      'title should be `A bit-bucket full of tags`': function (tag) {
-        assert.equal(tag.title, 'A bit-bucket full of tags');
-      },
-      'artist should be by `gitzer\'s`': function (tag) {
-        assert.equal(tag.artist, 'gitzer\'s');
-      },
-      'album should be on `Waffles for free!`': function (tag) {
-        assert.equal(tag.album, "Waffles for free!");
-      },
-      'track should be the first': function (tag) {
-        assert.equal(tag.track, 1);
-      },
-      'should be from 2011': function (tag) {
-        assert.equal(tag.year, 2011);
-      },
-      'should have a silly comment': function(tag) {
-        assert.equal(tag.comment, "Salami Wiglet.");
-      }
-    },
-
-    'reading audioProperties': {
-      topic: function() {
-        var buf = fs.readFileSync(__dirname+'/blip.mp3');
-        Taglib.read(buf, 'mpeg', this.callback);
-      },
-
-      'should have length 1 second': function(err, _, prop) {
-        assert.equal(prop.length, 1);
-      },
-      'should have bitrate 128kbps': function(err, _, prop) {
-        assert.equal(prop.bitrate, 128);
-      },
-      'should have sampleRate 44100Hz': function(err, _, prop) {
-        assert.equal(prop.sampleRate, 44100);
-      },
-      'should have 2 channels': function(err, _, prop) {
-        assert.equal(prop.channels, 2);
-      }
-    },
-  },
-
-  'reading data from a buffer with unknown format': {
-    topic: function() {
-      var buf = fs.readFileSync(__dirname+'/sample.mp3');
-      Taglib.read(buf, '', this.callback);
-    },
-
-    'should raise an error': function(err, _, _) {
-      assert.isNotNull(err);
-      assert.match(err.message, /Unknown file format/);
-    }
-  },
-
-  'reading data from a buffer with wrong format': {
-    topic: function() {
-      var buf = fs.readFileSync(__dirname+'/sample.mp3');
-      Taglib.read(buf, 'ogg', this.callback);
-    },
-
-    'should raise an error': function(err, _, _) {
-      assert.isNotNull(err);
-      assert.match(err.message, /Failed to extract tags/);
-    }
-  },
-
-  'reading data from empty buffer': {
-    topic: function() {
-      var buf = new Buffer(0);
-      Taglib.read(buf, 'mpeg', this.callback);
-    },
-
-    'should lead to empty tags and properties': function(err, tag, prop) {
-      assert.isNull(err);
-      assert.isEmpty(tag);
-      assert.isObject(prop);
-    }
-  },
-
-  /* * T A G * */
-  'tag metadata from mp3 buffer': {
-    topic: function() {
-      var buf = fs.readFileSync(__dirname+'/sample.mp3');
-      Taglib.tag(buf, 'mpeg', this.callback);
     },
 
     'should be called with two arguments': function (err, tag) {
@@ -117,72 +20,91 @@ vows.describe('taglib bindings: Buffers')
     'reading tags': {
       topic: function() {
         var buf = fs.readFileSync(__dirname+'/sample.mp3');
-        Taglib.tag(buf, 'mpeg', this.callback);
+        Taglib.read(buf, 'mpeg', this.callback);
       },
 
-      'title should be `A bit-bucket full of tags`': function (tag) {
-        assert.equal(tag.title, 'A bit-bucket full of tags');
+      'title should be `A bit-bucket full of tags`': function (metadata) {
+        assert.equal(metadata.title, 'A bit-bucket full of tags');
       },
-      'artist should be by `gitzer\'s`': function (tag) {
-        assert.equal(tag.artist, 'gitzer\'s');
+      'artist should be by `gitzer\'s`': function (metadata) {
+        assert.equal(metadata.artist, 'gitzer\'s');
       },
-      'album should be on `Waffles for free!`': function (tag) {
-        assert.equal(tag.album, "Waffles for free!");
+      'album should be on `Waffles for free!`': function (metadata) {
+        assert.equal(metadata.album, "Waffles for free!");
       },
-      'track should be the first': function (tag) {
-        assert.equal(tag.track, 1);
+      'track should be the first': function (metadata) {
+        assert.equal(metadata.track, 1);
       },
-      'should be from 2011': function (tag) {
-        assert.equal(tag.year, 2011);
+      'should be from 2011': function (metadata) {
+        assert.equal(metadata.year, 2011);
       },
-      'should have a silly comment': function(tag) {
-        assert.equal(tag.comment, "Salami Wiglet.");
+      'should have a silly comment': function(metadata) {
+        assert.equal(metadata.comment, "Salami Wiglet.");
       }
-    }
-  },
-
-  'tag data from a buffer with unknown format': {
-    topic: function() {
-      var buf = fs.readFileSync(__dirname+'/sample.mp3');
-      Taglib.tag(buf, '', this.callback);
     },
 
-    'should raise an error': function(err, _) {
+    'reading audioProperties': {
+      topic: function() {
+        var buf = fs.readFileSync(__dirname+'/blip.mp3');
+        Taglib.read(buf, 'mpeg', this.callback);
+      },
+
+      'should have length 1 second': function(err, metadata) {
+        assert.equal(metadata.length, 1);
+      },
+      'should have bitrate 128kbps': function(err, metadata) {
+        assert.equal(metadata.bitrate, 128);
+      },
+      'should have sampleRate 44100Hz': function(err, metadata) {
+        assert.equal(metadata.sampleRate, 44100);
+      },
+      'should have 2 channels': function(err, metadata) {
+        assert.equal(metadata.channels, 2);
+      }
+    },
+  },
+
+  'reading metadata from a buffer with unknown format': {
+    topic: function() {
+      var buf = fs.readFileSync(__dirname+'/sample.mp3');
+      Taglib.read(buf, '', this.callback);
+    },
+
+    'should raise an error': function(err, _, _) {
       assert.isNotNull(err);
       assert.match(err.message, /Unknown file format/);
     }
   },
 
-  'tag data from a buffer with wrong format': {
+  'reading metadata from a buffer with wrong format': {
     topic: function() {
       var buf = fs.readFileSync(__dirname+'/sample.mp3');
-      Taglib.tag(buf, 'ogg', this.callback);
+      Taglib.read(buf, 'ogg', this.callback);
     },
 
-    'should raise an error': function(err, _) {
+    'should raise an error': function(err, _, _) {
       assert.isNotNull(err);
       assert.match(err.message, /Failed to extract tags/);
     }
   },
 
-  'tag data from empty buffer': {
+  'reading metadata from empty buffer': {
     topic: function() {
       var buf = new Buffer(0);
-      Taglib.tag(buf, 'mpeg', this.callback);
+      Taglib.read(buf, 'mpeg', this.callback);
     },
 
-    'should lead to empty tags and properties': function(err, tag) {
-      assert.isNull(err);
-      assert.isObject(tag);
+    'should raise an error': function(err, _, _) {
+      assert.isNotNull(err);
+      assert.match(err.message, /Failed to extract tags/);
     }
   },
 
 
-  /* * T A G S Y N C * */
-  'tagSync metadata from mp3 buffer': {
+  'readSync metadata from mp3 buffer': {
     topic: function() {
       var buf = fs.readFileSync(__dirname+'/sample.mp3');
-      return Taglib.tagSync(buf, 'mpeg');
+      return Taglib.readSync(buf, 'mpeg');
     },
 
     'title should be `A bit-bucket full of tags`': function (tag) {
@@ -205,11 +127,11 @@ vows.describe('taglib bindings: Buffers')
     }
   },
 
-  'tagSync data from a buffer with unknown format': {
+  'readSync data from a buffer with unknown format': {
     topic: function() {
       return function() {
         var buf = fs.readFileSync(__dirname+'/sample.mp3');
-        return Taglib.tagSync(buf, '', this.callback);
+        return Taglib.readSync(buf, '', this.callback);
       }
     },
 
@@ -218,27 +140,29 @@ vows.describe('taglib bindings: Buffers')
     }
   },
 
-  'tagSync data from a buffer with wrong format': {
+  'readSync data from a buffer with wrong format': {
     topic: function() {
       return function() {
         var buf = fs.readFileSync(__dirname+'/sample.mp3');
-        return Taglib.tagSync(buf, 'ogg');
+        return Taglib.readSync(buf, 'ogg');
       }
     },
 
     'should raise an error': function(topic) {
-      assert.throws(topic, /Failed to extract tags/);
+      assert.throws(topic, /extract tags/);
     }
   },
 
-  'tagSync data from empty buffer': {
+  'readSync data from empty buffer': {
     topic: function() {
-      var buf = new Buffer(0);
-      return Taglib.tagSync(buf, 'mpeg');
+      return function() {
+         var buf = new Buffer(0);
+         return Taglib.readSync(buf, 'mpeg');
+      }
     },
 
-    'should lead to empty tags': function(tag) {
-      assert.isObject(tag);
+    'should raise an error': function(topic) {
+      assert.throws(topic, /extract tags/);
     }
   },
 
@@ -246,7 +170,7 @@ vows.describe('taglib bindings: Buffers')
     topic: function() {
       return function() {
         var buf = fs.readFileSync(__dirname+'/sample.mp3');
-        var tag = Taglib.tagSync(buf, 'mpeg');
+        var tag = Taglib.readSync(buf, 'mpeg');
         tag.artist = 'nsm';
         tag.saveSync();
       }

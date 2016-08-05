@@ -5,3 +5,6 @@ spec/sample-write.mp3
 node_modules
 .DS_Store
 spec/sample-write-async.mp3
+spec/sample2.mp3
+spec/blip2.mp3
+.idea
