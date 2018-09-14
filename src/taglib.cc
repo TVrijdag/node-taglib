@@ -181,7 +181,9 @@ TagLib::String NodeStringToTagLibString( Local<Value> s )
         return TagLib::String::null;
     }
     else {
-        String::Utf8Value str(s->ToString());
+        Isolate* isolate = Isolate::GetCurrent();
+
+        String::Utf8Value str(isolate, s->ToString());
         return TagLib::String(*str, TagLib::String::UTF8);
     }
 }

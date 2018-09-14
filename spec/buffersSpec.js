@@ -90,7 +90,7 @@ vows.describe('taglib bindings: Buffers')
 
   'reading metadata from empty buffer': {
     topic: function() {
-      var buf = new Buffer(0);
+      var buf = Buffer.alloc(0);
       Taglib.read(buf, 'mpeg', this.callback);
     },
 
@@ -156,7 +156,7 @@ vows.describe('taglib bindings: Buffers')
   'readSync data from empty buffer': {
     topic: function() {
       return function() {
-         var buf = new Buffer(0);
+         var buf = Buffer.alloc(0);
          return Taglib.readSync(buf, 'mpeg');
       }
     },

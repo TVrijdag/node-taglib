@@ -270,9 +270,10 @@ void Metadata::AsyncSaveMetadataAfter(uv_work_t *req) {
 NAN_METHOD(Metadata::SyncReadMetadata) {
     TagLib::FileRef *f = 0;
     int error = 0;
+    Isolate* isolate = Isolate::GetCurrent();
 
     if (info.Length() >= 1 && info[0]->IsString()) {
-        String::Utf8Value path(info[0]->ToString());
+        String::Utf8Value path(isolate, info[0]->ToString());
         if ((error = CreateFileRefPath(*path, &f))) {
             Local<String> fn = String::Concat(info[0]->ToString(), Nan::New(": ", -1).ToLocalChecked());
             Nan::ThrowError(String::Concat(fn, ErrorToString(error)));
@@ -326,6 +327,8 @@ NAN_METHOD(Metadata::AsyncReadMetadata) {
     }
 
 
+    Isolate* isolate = Isolate::GetCurrent();
+
     AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
     baton->path = NULL;
@@ -333,7 +336,7 @@ NAN_METHOD(Metadata::AsyncReadMetadata) {
     baton->error = 0;
 
     if (info[0]->IsString()) {
-        String::Utf8Value path(info[0]->ToString());
+        String::Utf8Value path(isolate, info[0]->ToString());
 //#if _WINDOWS
 //        baton->path = new TagLib::FileName(strdup(*path));
 //#else
