@@ -4,12 +4,11 @@
 
 #include "taglib.h"
 
-using namespace v8;
 using namespace node;
 using namespace node_taglib;
 
 namespace node_taglib {
-BufferStream::BufferStream(Handle<Object> buffer)
+BufferStream::BufferStream(v8::Local<v8::Object> buffer)
     : TagLib::IOStream()
     , m_data(Buffer::Data(buffer))
     , m_length(Buffer::Length(buffer))

@@ -111,7 +111,7 @@ NAN_GETTER(Metadata::GetTrack) {
 NAN_SETTER(Metadata::SetTrack) {
     Metadata *m = unwrapMetadata(info);
     if (m->fileRef)
-        m->tag->setTrack(value->IntegerValue());  
+        m->tag->setTrack(value->IntegerValue(Nan::GetCurrentContext()).ToChecked());  
 }
 
 NAN_GETTER(Metadata::GetYear) {
@@ -122,7 +122,7 @@ NAN_GETTER(Metadata::GetYear) {
 NAN_SETTER(Metadata::SetYear) {
     Metadata *m = unwrapMetadata(info);
     if (m->fileRef)
-        m->tag->setYear(value->IntegerValue());
+        m->tag->setYear(value->IntegerValue(Nan::GetCurrentContext()).ToChecked());
 }
 
 NAN_GETTER(Metadata::GetGenre) {
@@ -255,11 +255,11 @@ void Metadata::AsyncSaveMetadataAfter(uv_work_t *req) {
             error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file").ToLocalChecked());
             error->Set(Nan::New("path").ToLocalChecked(), Nan::New(baton->metadata->fileRef->file()->name()).ToLocalChecked());
         }
-        Handle<Value> argv[] = { error };
+        Local<Value> argv[] = { error };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 1, argv);
     }
     else {
-        Handle<Value> argv[] = { Nan::Null() };
+        Local<Value> argv[] = { Nan::Null() };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 1, argv);
     }
 
@@ -273,10 +273,10 @@ NAN_METHOD(Metadata::SyncReadMetadata) {
     Isolate* isolate = Isolate::GetCurrent();
 
     if (info.Length() >= 1 && info[0]->IsString()) {
-        String::Utf8Value path(isolate, info[0]->ToString());
+        String::Utf8Value path(isolate, info[0]->ToString(isolate));
         if ((error = CreateFileRefPath(*path, &f))) {
-            Local<String> fn = String::Concat(info[0]->ToString(), Nan::New(": ", -1).ToLocalChecked());
-            Nan::ThrowError(String::Concat(fn, ErrorToString(error)));
+            Local<String> fn = String::Concat(isolate, info[0]->ToString(isolate), Nan::New(": ", -1).ToLocalChecked());
+            Nan::ThrowError(String::Concat(isolate, fn, ErrorToString(error)));
             return;
         }
     } else if (info.Length() >= 1 && Buffer::HasInstance(info[0])) {
@@ -285,7 +285,7 @@ NAN_METHOD(Metadata::SyncReadMetadata) {
             return;
         }
 
-        if ((error = CreateFileRef(new BufferStream(info[0]->ToObject()), NodeStringToTagLibString(info[1]->ToString()), &f))) {
+        if ((error = CreateFileRef(new BufferStream(info[0]->ToObject(isolate)), NodeStringToTagLibString(info[1]->ToString(isolate)), &f))) {
             Nan::ThrowError(ErrorToString(error));
             return;
         }
@@ -336,7 +336,7 @@ NAN_METHOD(Metadata::AsyncReadMetadata) {
     baton->error = 0;
 
     if (info[0]->IsString()) {
-        String::Utf8Value path(isolate, info[0]->ToString());
+        String::Utf8Value path(isolate, info[0]->ToString(isolate));
 //#if _WINDOWS
 //        baton->path = new TagLib::FileName(strdup(*path));
 //#else
@@ -346,8 +346,8 @@ NAN_METHOD(Metadata::AsyncReadMetadata) {
 
     }
     else {
-        baton->format = NodeStringToTagLibString(info[1]->ToString());
-        baton->stream = new BufferStream(info[0]->ToObject());
+        baton->format = NodeStringToTagLibString(info[1]->ToString(isolate));
+        baton->stream = new BufferStream(info[0]->ToObject(isolate));
         baton->callback.Reset(Local<Function>::Cast(info[2]));
     }
 
@@ -384,13 +384,13 @@ void Metadata::AsyncMetadataReadAfter(uv_work_t *req) {
         Local<Object> error = Nan::New<Object>();
         error->Set(Nan::New("code").ToLocalChecked(), Nan::New(baton->error));
         error->Set(Nan::New("message").ToLocalChecked(), ErrorToString(baton->error));
-        Handle<Value> argv[] = { error, Nan::Null() };
+        Local<Value> argv[] = { error, Nan::Null() };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 2, argv);
     }
     else {
         Local<Object> inst = Nan::NewInstance(Nan::New(constructor())).ToLocalChecked();
         baton->metadata->Wrap(inst);
-        Handle<Value> argv[] = { Nan::Null(), inst };
+        Local<Value> argv[] = { Nan::Null(), inst };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 2, argv);
     }
 

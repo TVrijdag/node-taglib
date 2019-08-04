@@ -10,7 +10,7 @@
 namespace node_taglib {
 class BufferStream : public TagLib::IOStream {
 public:
-    BufferStream(v8::Handle<v8::Object> buffer);
+    BufferStream(v8::Local<v8::Object> buffer);
 
     ~BufferStream();
 

@@ -183,7 +183,7 @@ TagLib::String NodeStringToTagLibString( Local<Value> s )
     else {
         Isolate* isolate = Isolate::GetCurrent();
 
-        String::Utf8Value str(isolate, s->ToString());
+        String::Utf8Value str(isolate, s->ToString(isolate));
         return TagLib::String(*str, TagLib::String::UTF8);
     }
 }
@@ -227,14 +227,16 @@ void CallbackResolver::stopIdling(uv_async_t *handle)
 
 void CallbackResolver::invokeResolver(AsyncResolverBaton *baton)
 {
+    Isolate* isolate = Isolate::GetCurrent();
+
     Nan::HandleScope scope;
-    Handle<Value> argv[] = { TagLibStringToString(baton->fileName) };
+    Local<Value> argv[] = { TagLibStringToString(baton->fileName) };
     Local<Value> ret = Nan::Call(Nan::New(baton->resolver->resolverFunc), Nan::GetCurrentContext()->Global(), 1, argv).ToLocalChecked();
     if (!ret->IsString()) {
         baton->type = TagLib::String::null;
     }
     else {
-        baton->type = NodeStringToTagLibString(ret->ToString()).upper();
+        baton->type = NodeStringToTagLibString(ret->ToString(isolate)).upper();
     }
 }
 
@@ -274,8 +276,7 @@ TagLib::File *CallbackResolver::createFile(TagLib::FileName fileName, bool readA
 
 extern "C" {
 
-static void
-init (Handle<Object> target)
+static void init (Local<Object> target)
 {
     Nan::HandleScope scope;
 
