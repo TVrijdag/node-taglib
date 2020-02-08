@@ -16,9 +16,9 @@
     "nan": "^2.14.0"
   },
   "devDependencies": {
-    "vows": "^0.8.2",
-    "async": "^2.3.0",
-    "match-files": "^0.1.1"
+    "async": "^2.6.3",
+    "match-files": "^0.1.1",
+    "vows": "^0.8.3"
   },
   "scripts": {
     "test": "vows --spec"
