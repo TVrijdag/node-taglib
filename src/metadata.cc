@@ -242,6 +242,7 @@ void Metadata::AsyncSaveMetadataDo(uv_work_t *req) {
 void Metadata::AsyncSaveMetadataAfter(uv_work_t *req) {
     Isolate* isolate = Isolate::GetCurrent();
     HandleScope scope(isolate);
+    auto context = isolate->GetCurrentContext();
 
     AsyncBaton *baton = static_cast<AsyncBaton*>(req->data);
 
@@ -249,11 +250,11 @@ void Metadata::AsyncSaveMetadataAfter(uv_work_t *req) {
         Local<Object> error = Nan::New<Object>();
         // Check whether the file descriptor was closed
         if (baton->metadata->fileRef == NULL) {
-            error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file: the file descriptor has already been closed").ToLocalChecked());
+            error->Set(context, Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file: the file descriptor has already been closed").ToLocalChecked());
         }
         else {
-            error->Set(Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file").ToLocalChecked());
-            error->Set(Nan::New("path").ToLocalChecked(), Nan::New(baton->metadata->fileRef->file()->name()).ToLocalChecked());
+            error->Set(context, Nan::New("message").ToLocalChecked(), Nan::New("Failed to save file").ToLocalChecked());
+            error->Set(context, Nan::New("path").ToLocalChecked(), Nan::New(baton->metadata->fileRef->file()->name()).ToLocalChecked());
         }
         Local<Value> argv[] = { error };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 1, argv);
@@ -271,11 +272,12 @@ NAN_METHOD(Metadata::SyncReadMetadata) {
     TagLib::FileRef *f = 0;
     int error = 0;
     Isolate* isolate = Isolate::GetCurrent();
+    auto context = isolate->GetCurrentContext();
 
     if (info.Length() >= 1 && info[0]->IsString()) {
-        String::Utf8Value path(isolate, info[0]->ToString(isolate));
+        String::Utf8Value path(isolate, info[0]->ToString(context).ToLocalChecked());
         if ((error = CreateFileRefPath(*path, &f))) {
-            Local<String> fn = String::Concat(isolate, info[0]->ToString(isolate), Nan::New(": ", -1).ToLocalChecked());
+            Local<String> fn = String::Concat(isolate, info[0]->ToString(context).ToLocalChecked(), Nan::New(": ", -1).ToLocalChecked());
             Nan::ThrowError(String::Concat(isolate, fn, ErrorToString(error)));
             return;
         }
@@ -285,7 +287,7 @@ NAN_METHOD(Metadata::SyncReadMetadata) {
             return;
         }
 
-        if ((error = CreateFileRef(new BufferStream(info[0]->ToObject(isolate)), NodeStringToTagLibString(info[1]->ToString(isolate)), &f))) {
+        if ((error = CreateFileRef(new BufferStream(info[0]->ToObject(context).ToLocalChecked()), NodeStringToTagLibString(info[1]->ToString(context).ToLocalChecked()), &f))) {
             Nan::ThrowError(ErrorToString(error));
             return;
         }
@@ -328,6 +330,7 @@ NAN_METHOD(Metadata::AsyncReadMetadata) {
 
 
     Isolate* isolate = Isolate::GetCurrent();
+    auto context = isolate->GetCurrentContext();
 
     AsyncBaton *baton = new AsyncBaton();
     baton->request.data = baton;
@@ -336,7 +339,7 @@ NAN_METHOD(Metadata::AsyncReadMetadata) {
     baton->error = 0;
 
     if (info[0]->IsString()) {
-        String::Utf8Value path(isolate, info[0]->ToString(isolate));
+        String::Utf8Value path(isolate, info[0]->ToString(context).ToLocalChecked());
 //#if _WINDOWS
 //        baton->path = new TagLib::FileName(strdup(*path));
 //#else
@@ -346,8 +349,8 @@ NAN_METHOD(Metadata::AsyncReadMetadata) {
 
     }
     else {
-        baton->format = NodeStringToTagLibString(info[1]->ToString(isolate));
-        baton->stream = new BufferStream(info[0]->ToObject(isolate));
+        baton->format = NodeStringToTagLibString(info[1]->ToString(context).ToLocalChecked());
+        baton->stream = new BufferStream(info[0]->ToObject(context).ToLocalChecked());
         baton->callback.Reset(Local<Function>::Cast(info[2]));
     }
 
@@ -377,13 +380,14 @@ void Metadata::AsyncMetadataReadDo(uv_work_t *req) {
 void Metadata::AsyncMetadataReadAfter(uv_work_t *req) {
     Isolate* isolate = Isolate::GetCurrent();
     HandleScope scope(isolate);
+    auto context = isolate->GetCurrentContext();
 
     AsyncBaton *baton = static_cast<AsyncBaton*>(req->data);
 
     if (baton->error) {
         Local<Object> error = Nan::New<Object>();
-        error->Set(Nan::New("code").ToLocalChecked(), Nan::New(baton->error));
-        error->Set(Nan::New("message").ToLocalChecked(), ErrorToString(baton->error));
+        error->Set(context, Nan::New("code").ToLocalChecked(), Nan::New(baton->error));
+        error->Set(context, Nan::New("message").ToLocalChecked(), ErrorToString(baton->error));
         Local<Value> argv[] = { error, Nan::Null() };
         Nan::Call(Nan::New(baton->callback), Nan::GetCurrentContext()->Global(), 2, argv);
     }

@@ -182,8 +182,9 @@ TagLib::String NodeStringToTagLibString( Local<Value> s )
     }
     else {
         Isolate* isolate = Isolate::GetCurrent();
+        auto context = isolate->GetCurrentContext();
 
-        String::Utf8Value str(isolate, s->ToString(isolate));
+        String::Utf8Value str(isolate, s->ToString(context).ToLocalChecked());
         return TagLib::String(*str, TagLib::String::UTF8);
     }
 }
@@ -228,6 +229,7 @@ void CallbackResolver::stopIdling(uv_async_t *handle)
 void CallbackResolver::invokeResolver(AsyncResolverBaton *baton)
 {
     Isolate* isolate = Isolate::GetCurrent();
+    auto context = isolate->GetCurrentContext();
 
     Nan::HandleScope scope;
     Local<Value> argv[] = { TagLibStringToString(baton->fileName) };
@@ -236,7 +238,7 @@ void CallbackResolver::invokeResolver(AsyncResolverBaton *baton)
         baton->type = TagLib::String::null;
     }
     else {
-        baton->type = NodeStringToTagLibString(ret->ToString(isolate)).upper();
+        baton->type = NodeStringToTagLibString(ret->ToString(context).ToLocalChecked()).upper();
     }
 }
 
